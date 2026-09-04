@@ -70,6 +70,17 @@ So a row this script flags as "not a whole number of days" is not necessarily
 wrong. It means nobody reading the file can tell what the number is made of,
 which is worth knowing in its own right.
 
+**A correction.** An earlier version of this note said the reason for a
+deduction "has been thrown away". That is true of this file and **false of the
+system behind it**: HCIS keeps pension, loan repayment and other deductions
+apart, with a note against the last one. The reason is not lost in the payroll
+— it is lost **on the way out**, when three itemised figures are added into one
+column. That is a much smaller thing to fix, and worth stating plainly because
+the original claim was wrong about where the problem lives.
+
+It also explains the rows that are not a whole number of days: HCIS has loan
+instalments and other deductions, and those are exactly what they look like.
+
 ## Notes on the August 2026 file
 
 Verified against the real file, 3,429 people. Everything below is what the
