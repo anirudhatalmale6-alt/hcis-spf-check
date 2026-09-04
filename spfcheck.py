@@ -94,6 +94,58 @@ def check_duplicates(rows):
                extra_net, extra_spf))
 
 
+def check_nin_shape(rows):
+    """The NIN is the only address the money has.
+
+    Finance do not register a carer first - they pay from what is in this file.
+    So a NIN that is malformed, or one person appearing under two of them, is
+    not caught by anything downstream. This file is the only place it can be.
+    """
+    shape = lambda s: ''.join('9' if ch.isdigit() else
+                              ('A' if ch.isalpha() else ch) for ch in str(s).strip())
+    shapes = collections.Counter(shape(r[0]) for _, r in rows)
+    if not shapes:
+        return
+    usual, n = shapes.most_common(1)[0]
+    odd = [(i, r[0]) for i, r in rows if shape(r[0]) != usual]
+    if odd:
+        problems.append(
+            '%d NIN%s not written the same way as the other %d (%s):'
+            % (len(odd), '' if len(odd) == 1 else 's are', n, usual))
+        for i, nin in odd[:10]:
+            problems.append('    row %d: %s' % (i, nin))
+        if len(odd) > 10:
+            problems.append('    ...and %d more.' % (len(odd) - 10))
+    else:
+        notes.append('Every NIN is written the same way (%s).' % usual)
+
+
+def check_same_name_two_nins(rows):
+    """Two NINs, one person - paid twice under two identities.
+
+    The duplicate-NIN check cannot see this one, and neither can Finance,
+    because there is no master list of carers to compare against.
+    """
+    by_name = collections.defaultdict(set)
+    where = collections.defaultdict(list)
+    for i, r in rows:
+        key = ' '.join(str(r[1]).upper().split())
+        by_name[key].add(str(r[0]).strip())
+        where[key].append(i)
+    hits = [(k, v) for k, v in by_name.items() if len(v) > 1]
+    for name, nins in hits[:10]:
+        problems.append(
+            'The name %s appears under %d different NINs (rows %s): %s.\n'
+            '      If that is one person, they are on this run twice.'
+            % (name, len(nins), ', '.join(str(x) for x in where[name]),
+               ', '.join(sorted(nins))))
+    if len(hits) > 10:
+        problems.append('...and %d more names carrying more than one NIN.'
+                        % (len(hits) - 10))
+    if not hits:
+        notes.append('No name appears under two different NINs.')
+
+
 def check_arithmetic(rows):
     bad = 0
     for i, r in rows:
@@ -231,6 +283,8 @@ def main():
         sys.exit('No rows with a NIN in them - is this the right file?')
 
     check_duplicates(rows)
+    check_nin_shape(rows)
+    check_same_name_two_nins(rows)
     check_arithmetic(rows)
     check_spf(rows)
     check_deduction_days(rows)
