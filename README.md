@@ -23,7 +23,7 @@ be wired into something later if that turns out to be useful.
 | | |
 |---|---|
 | Columns | the twelve expected headings, in the expected order |
-| Duplicates | the same NIN more than once, and what the repeats are worth |
+| Duplicates | the same NIN more than once — and separately, the same NIN carrying **different** amounts |
 | NIN shape | a NIN not written the same way as all the others |
 | One person, two NINs | the same name appearing under two different NINs |
 | Arithmetic | basic + allowances − deductions = net, on every row |
@@ -32,6 +32,20 @@ be wired into something later if that turns out to be useful.
 | Formats | a money column wearing a date or a time format |
 | Empty rows | thousands of blank rows below the data that make the sheet look longer than it is |
 | One period | every row carrying the same year and month |
+
+## The duplicate that matters
+
+Finance pay **once per NIN**. So the same person repeated with identical figures
+is untidy rather than expensive — nobody gets paid twice.
+
+The dangerous one is the same NIN appearing with **different** amounts. One of
+those figures will be paid and the rest will be dropped silently, and nothing
+downstream records which was meant. That decision has to be made in this file,
+by leaving one row, because after it leaves nobody can make it deliberately.
+
+This is also why a payment run must keep **one line per person**. An adjustment
+has to change the existing line, never add a second one — a correction row would
+be read as a duplicate and quietly discarded.
 
 ## Why the NIN checks matter here
 

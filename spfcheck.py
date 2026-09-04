@@ -80,18 +80,34 @@ def check_duplicates(rows):
     for nin, group in seen.items():
         if len(group) == 1:
             continue
-        same = len(set(tuple(str(x) for x in r) for _, r in group)) == 1
         lines = ', '.join(str(i) for i, _ in group)
-        extra_net = sum(money(r[6]) for _, r in group[1:])
-        extra_spf = sum(money(r[8]) for _, r in group[1:])
+        amounts = set(round(money(r[6]), 2) for _, r in group)
+
+        if len(amounts) > 1:
+            # The dangerous one. Finance pay once per NIN, so one of these
+            # figures is going to win and the rest are going to vanish, and
+            # nothing anywhere will say which.
+            problems.append(
+                'READ THIS ONE FIRST. %s appears %d times (rows %s) with '
+                'DIFFERENT net pay: %s.\n'
+                '      Finance pay once per NIN, so one of those figures will '
+                'be paid and the others will be\n'
+                '      dropped without a word. Nobody downstream can tell which '
+                'was meant. Decide here, in\n'
+                '      this file, by leaving one row.'
+                % (nin, len(group), lines,
+                   ', '.join('%.2f' % a for a in sorted(amounts))))
+            continue
+
         problems.append(
-            '%s appears %d times (rows %s)%s.\n'
-            '      If the receiving system adds up rows, that is %.2f of net pay '
-            'and %.2f of SPF employee\n'
-            '      contribution more than this person should have.'
+            '%s appears %d times (rows %s), every copy identical.\n'
+            '      Finance pay once per NIN, so this should not become extra '
+            'pay - but the repeats also\n'
+            '      declare %.2f of SPF contribution that this person did not '
+            'earn. Worth deleting the\n'
+            '      spare rows so the file says what it means.'
             % (nin, len(group), lines,
-               ', and every copy is identical' if same else '',
-               extra_net, extra_spf))
+               sum(money(r[8]) for _, r in group[1:])))
 
 
 def check_nin_shape(rows):
